@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Search</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background-color: #f4f4f9; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1, h2 { color: #333; }
+        form { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        input[type="file"], input[type="text"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        input[type="submit"] { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        input[type="submit"]:hover { background-color: #45a049; }
+        #results { margin-top: 20px; }
+        .result { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; display: flex; align-items: center; border-radius: 5px; background: #fafafa; }
+        .result .img-container { position: relative; margin-right: 15px; }
+        .result img { max-width: 200px; height: auto; border-radius: 4px; }
+        .result .info { flex-grow: 1; }
+        .box { border: 2px solid red; position: absolute; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Image Search Engine</h1>
+        
+        <h2>1. Upload an Image to the Database</h2>
+        <form id="uploadForm" action="#" method="post" enctype="multipart/form-data">
+            <input type="file" name="files" required multiple>
+            <input type="submit" value="Upload and Index">
+        </form>
+        <div id="uploadMessage"></div>
+
+        <h2>2. Search the Database</h2>
+        <form id="searchForm" action="#" method="post" enctype="multipart/form-data">
+            <p><strong>Search by Text:</strong></p>
+            <input type="text" name="query_text" placeholder="e.g., 'a person on a bike'">
+            <p><strong>Or Search by Image:</strong></p>
+            <input type="file" name="query_image">
+            <br><br>
+            <input type="submit" value="Search">
+        </form>
+
+        <hr>
+        <h2>Results</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const formData = new FormData(e.target);
+            const messageDiv = document.getElementById('uploadMessage');
+            const files = e.target.querySelector('input[type="file"]').files;
+            
+            if (files.length === 0) {
+                messageDiv.textContent = 'Please select one or more files to upload.';
+                return;
+            }
+
+            messageDiv.textContent = `Uploading and processing ${files.length} image(s)... Please wait.`;
+            
+            const response = await fetch('/upload/', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            messageDiv.textContent = data.message || 'Upload complete.';
+            e.target.reset();
+        });
+
+        document.getElementById('searchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            const formData = new FormData(e.target);
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = 'Searching...';
+
+            let data = { results: [] };
+            try {
+                const response = await fetch('/search/', {
+                    method: 'POST',
+                    body: formData
+                });
+                data = await response.json();
+            } catch (err) {
+                resultsDiv.innerHTML = 'Search failed.';
+                return;
+            }
+            resultsDiv.innerHTML = '';
+
+            if (data.results && data.results.length > 0) {
+                data.results.forEach(res => {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'result';
+                    
+                    const imgContainer = document.createElement('div');
+                    imgContainer.className = 'img-container';
+                    
+                    const img = document.createElement('img');
+                    img.src = res.image_url;
+
+                    img.onload = () => {
+                        if (res.type === 'object' && res.box) {
+                            const boxDiv = document.createElement('div');
+                            boxDiv.className = 'box';
+                            
+                            // Calculate scaling factor
+                            const scaleX = img.width / img.naturalWidth;
+                            const scaleY = img.height / img.naturalHeight;
+                            
+                            // Apply scaled coordinates
+                            const left = res.box[0] * scaleX;
+                            const top = res.box[1] * scaleY;
+                            const width = (res.box[2] - res.box[0]) * scaleX;
+                            const height = (res.box[3] - res.box[1]) * scaleY;
+                            boxDiv.style.left = left + 'px';
+                            boxDiv.style.top = top + 'px';
+                            boxDiv.style.width = width + 'px';
+                            boxDiv.style.height = height + 'px';
+                            
+                            imgContainer.appendChild(boxDiv);
+                        }
+                    };
+
+                    imgContainer.appendChild(img);
+                    resultDiv.appendChild(imgContainer);
+
+                    const infoDiv = document.createElement('div');
+                    infoDiv.className = 'info';
+                    infoDiv.innerHTML = `
+                        <p><strong>Similarity:</strong> ${res.score.toFixed(2)}</p>
+                        <p><strong>Type:</strong> ${res.type}</p>
+                        ${res.box ? `<p><strong>Box:</strong> [${res.box.join(', ')}]</p>` : ''}
+                    `;
+                    resultDiv.appendChild(infoDiv);
+                    resultsDiv.appendChild(resultDiv);
+                });
+            } else {
+                resultsDiv.innerHTML = 'No results found.';
+            }
+        });
+    </script>
+</body>
+</html>
