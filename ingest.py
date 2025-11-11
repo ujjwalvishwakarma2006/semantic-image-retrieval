@@ -41,6 +41,14 @@ def _nms(boxes: List[List[int]], scores: List[float], iou_thresh: float = 0.9) -
         idxs = [j for j in idxs if _iou(boxes[i], boxes[j]) < iou_thresh]
     return keep
 
+def _prepare_pil(img: Image.Image) -> Image.Image:
+    """Ensure PIL RGB image."""
+    if not isinstance(img, Image.Image):
+        img = Image.fromarray(np.array(img))
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    return img
+
 def get_sam_model(device):
     sam_checkpoint = "sam_vit_b_01ec64.pth"
     model_type = "vit_b"
@@ -99,14 +107,6 @@ def ingest_single_image(image_path, index_path, metadata_path):
 
     new_embeddings = []
     new_metadata_entries = {}
-
-    def _prepare_pil(img: Image.Image) -> Image.Image:
-        """Ensure PIL RGB image."""
-        if not isinstance(img, Image.Image):
-            img = Image.fromarray(np.array(img))
-        if img.mode != "RGB":
-            img = img.convert("RGB")
-        return img
 
     # 1. Global embedding
     img_for_clip = _prepare_pil(image)
@@ -242,13 +242,6 @@ def ingest_images_directory(images_dir, index_path, metadata_path):
     clip_model.eval()
     clip_processor = CLIPProcessor.from_pretrained(clip_model_name)
     print(device)
-    def _prepare_pil(img: Image.Image) -> Image.Image:
-        """Ensure PIL RGB image."""
-        if not isinstance(img, Image.Image):
-            img = Image.fromarray(np.array(img))
-        if img.mode != "RGB":
-            img = img.convert("RGB")
-        return img
 
     all_embeddings = []
     all_metadata = {}
