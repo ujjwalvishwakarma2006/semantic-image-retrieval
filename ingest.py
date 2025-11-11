@@ -148,7 +148,6 @@ def ingest_single_image(image_path, index_path, metadata_path):
     keep_idx = _nms(candidate_boxes, candidate_scores, iou_thresh=0.8)
     # Keep only the top-N highest scoring boxes to avoid background clutter
     MAX_OBJECTS_PER_IMAGE = 12
-    keep_idx.sort(key=lambda k: candidate_scores[k], reverse=True)
     keep_idx = keep_idx[:MAX_OBJECTS_PER_IMAGE]
 
     for i_keep, k in enumerate(keep_idx):
