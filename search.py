@@ -7,7 +7,7 @@ from PIL import Image
 from transformers import CLIPProcessor, CLIPModel
 import argparse
 
-def search_by_text(query_text, index, metadata, clip_model, clip_processor, device, top_k=5, min_similarity: float | None = None):
+def search_by_text(query_text, index, metadata, clip_model, clip_processor, device, top_k=50, min_similarity: float | None = None):
     inputs = clip_processor(text=query_text, return_tensors="pt").to(device)
     with torch.no_grad():
         text_features = clip_model.get_text_features(**inputs)
@@ -32,7 +32,7 @@ def search_by_text(query_text, index, metadata, clip_model, clip_processor, devi
         })
     return results
 
-def search_by_image(image_path, index, metadata, clip_model, clip_processor, device, top_k=5, min_similarity: float | None = None):
+def search_by_image(image_path, index, metadata, clip_model, clip_processor, device, top_k=50, min_similarity: float | None = None):
     image = Image.open(image_path).convert("RGB")
     # Force channels_last to avoid ambiguity on very small images
     inputs = clip_processor(images=image, return_tensors="pt", input_data_format="channels_last").to(device)
