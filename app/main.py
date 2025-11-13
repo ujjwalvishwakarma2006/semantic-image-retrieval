@@ -20,9 +20,8 @@ IMAGES_DIR = "images"
 INDEX_PATH = "faiss_index.faiss"
 METADATA_PATH = "metadata.json"
 STATIC_DIR = "static"
-MIN_SIMILARITY = 0.2  # filter weak matches when using cosine similarity
+MIN_SIMILARITY = 0.2  # filter weak matches when using cosine similarity (threshold)
 FETCH_K = 100         # fetch more candidates, then re-rank/diversify
-TOP_IMAGES_FOR_RESTRICT = 5  # restrict final results to globally relevant images
 SCORE_TIE_EPS = 0.02  # prefer global over object if scores are very close
 
 # Ensure directories exist
@@ -139,25 +138,7 @@ async def search(query_text: str = Form(None), query_image: UploadFile = File(No
     finally:
         unload_search_models()
 
-    # Build per-image global score
-    global_by_image = {}
-    for r in results:
-        meta = r.get('metadata') or {}
-        if meta.get('type') != 'global':
-            continue
-        img = meta.get('image_path')
-        if not img:
-            continue
-        if img not in global_by_image or r['score'] > global_by_image[img]:
-            global_by_image[img] = r['score']
-
-    # If we have global scores, restrict to top images; else fall back to all
-    selected_images = set()
-    if global_by_image:
-        top_images = sorted(global_by_image.items(), key=lambda kv: kv[1], reverse=True)[:TOP_IMAGES_FOR_RESTRICT]
-        selected_images = {img for img, _ in top_images}
-        results = [r for r in results if (r.get('metadata') or {}).get('image_path') in selected_images]
-
+    
     # Diversify: keep the best (prefer global on ties) per image
     best_by_image = {}
     for r in results:
@@ -174,8 +155,8 @@ async def search(query_text: str = Form(None), query_image: UploadFile = File(No
         if better or tie_and_global_better:
             best_by_image[img] = r
 
-    # Final top-k after diversification
-    final_results = sorted(best_by_image.values(), key=lambda r: r['score'], reverse=True)[:5]
+    # Final results sorted by score (all results above MIN_SIMILARITY threshold)
+    final_results = sorted(best_by_image.values(), key=lambda r: r['score'], reverse=True)
 
     # Prepare results for the frontend
     output_results = []

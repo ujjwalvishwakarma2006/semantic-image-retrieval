@@ -1,149 +1,114 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Image Search</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic Image Search</title>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
-    <style>
-        body { font-family: Arial, sans-serif; margin: 2em; background-color: #f4f4f9; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1, h2 { color: #333; }
-        form { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
-        input[type="file"], input[type="text"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
-        input[type="submit"] { background-color: #4CAF50; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
-        input[type="submit"]:hover { background-color: #45a049; }
-        #results { margin-top: 20px; }
-        .result { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; display: flex; align-items: center; border-radius: 5px; background: #fafafa; }
-        .result .img-container { position: relative; margin-right: 15px; }
-        .result img { max-width: 200px; height: auto; border-radius: 4px; }
-        .result .info { flex-grow: 1; }
-        .box { border: 2px solid red; position: absolute; box-sizing: border-box; }
-    </style>
+    <link rel="stylesheet" href="static\styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Image Search Engine</h1>
-        
-        <h2>1. Upload an Image to the Database</h2>
-        <form id="uploadForm" action="#" method="post" enctype="multipart/form-data">
-            <input type="file" name="files" required multiple>
-            <input type="submit" value="Upload and Index">
-        </form>
-        <div id="uploadMessage"></div>
+        <header class="header">
+            <div class="logo">
 
-        <h2>2. Search the Database</h2>
-        <form id="searchForm" action="#" method="post" enctype="multipart/form-data">
-            <p><strong>Search by Text:</strong></p>
-            <input type="text" name="query_text" placeholder="e.g., 'a person on a bike'">
-            <p><strong>Or Search by Image:</strong></p>
-            <input type="file" name="query_image">
-            <br><br>
-            <input type="submit" value="Search">
-        </form>
+                <h1>Semantic Image Retrieval</h1>
+            </div>
+        </header>
 
-        <hr>
-        <h2>Results</h2>
-        <div id="results"></div>
+        <section class="glass-card upload-section">
+            <div class="section-header">
+                <div class="icon-wrapper">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </div>
+                <h2>Upload Images</h2>
+            </div>
+            <form id="uploadForm" action="#" method="post" enctype="multipart/form-data">
+                <div class="file-input-wrapper">
+                    <input type="file" name="files" id="uploadFiles" required multiple accept="image/*">
+                    <label for="uploadFiles" class="file-input-label">
+                        <span class="file-icon">📁</span>
+                        <span class="file-text">Choose images or drag & drop</span>
+                        <span class="file-hint">Support for JPG, PNG, WebP</span>
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <span>Upload & Index</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path d="M5 12h14M12 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </form>
+            <div id="uploadMessage" class="message"></div>
+        </section>
+
+        <section class="glass-card search-section">
+            <div class="section-header">
+                <div class="icon-wrapper">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="11" cy="11" r="8" stroke-width="2"/>
+                        <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <h2>Search Database</h2>
+            </div>
+            <form id="searchForm" action="#" method="post" enctype="multipart/form-data">
+                <div class="search-tabs">
+                    <button type="button" class="tab-btn active" data-tab="text">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M4 7h16M4 12h16M4 17h10" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Text Search
+                    </button>
+                    <button type="button" class="tab-btn" data-tab="image">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke-width="2"/>
+                            <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                            <path d="M21 15l-5-5L5 21" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        Image Search
+                    </button>
+                </div>
+                
+                <div class="tab-content active" id="textTab">
+                    <div class="input-wrapper">
+                        <input type="text" name="query_text" id="queryText" placeholder="Describe what you're looking for..." class="text-input">
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="imageTab">
+                    <div class="file-input-wrapper">
+                        <input type="file" name="query_image" id="queryImage" accept="image/*">
+                        <label for="queryImage" class="file-input-label small">
+                            <span class="file-icon">🖼️</span>
+                            <span class="file-text">Upload search image</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-secondary">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="11" cy="11" r="8" stroke-width="2"/>
+                        <path d="M21 21l-4.35-4.35" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>Search</span>
+                </button>
+            </form>
+        </section>
+
+        <section class="results-container" id="resultsContainer" style="display: none;">
+            <div class="section-header">
+                <h2>Search Results</h2>
+            </div>
+            <div id="results" class="results-grid"></div>
+        </section>
     </div>
 
-    <script>
-        document.getElementById('uploadForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const formData = new FormData(e.target);
-            const messageDiv = document.getElementById('uploadMessage');
-            const files = e.target.querySelector('input[type="file"]').files;
-            
-            if (files.length === 0) {
-                messageDiv.textContent = 'Please select one or more files to upload.';
-                return;
-            }
-
-            messageDiv.textContent = `Uploading and processing ${files.length} image(s)... Please wait.`;
-            
-            const response = await fetch('/upload/', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const data = await response.json();
-            messageDiv.textContent = data.message || 'Upload complete.';
-            e.target.reset();
-        });
-
-        document.getElementById('searchForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            const formData = new FormData(e.target);
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = 'Searching...';
-
-            let data = { results: [] };
-            try {
-                const response = await fetch('/search/', {
-                    method: 'POST',
-                    body: formData
-                });
-                data = await response.json();
-            } catch (err) {
-                resultsDiv.innerHTML = 'Search failed.';
-                return;
-            }
-            resultsDiv.innerHTML = '';
-
-            if (data.results && data.results.length > 0) {
-                data.results.forEach(res => {
-                    const resultDiv = document.createElement('div');
-                    resultDiv.className = 'result';
-                    
-                    const imgContainer = document.createElement('div');
-                    imgContainer.className = 'img-container';
-                    
-                    const img = document.createElement('img');
-                    img.src = res.image_url;
-
-                    img.onload = () => {
-                        if (res.type === 'object' && res.box) {
-                            const boxDiv = document.createElement('div');
-                            boxDiv.className = 'box';
-                            
-                            // Calculate scaling factor
-                            const scaleX = img.width / img.naturalWidth;
-                            const scaleY = img.height / img.naturalHeight;
-                            
-                            // Apply scaled coordinates
-                            const left = res.box[0] * scaleX;
-                            const top = res.box[1] * scaleY;
-                            const width = (res.box[2] - res.box[0]) * scaleX;
-                            const height = (res.box[3] - res.box[1]) * scaleY;
-                            boxDiv.style.left = left + 'px';
-                            boxDiv.style.top = top + 'px';
-                            boxDiv.style.width = width + 'px';
-                            boxDiv.style.height = height + 'px';
-                            
-                            imgContainer.appendChild(boxDiv);
-                        }
-                    };
-
-                    imgContainer.appendChild(img);
-                    resultDiv.appendChild(imgContainer);
-
-                    const infoDiv = document.createElement('div');
-                    infoDiv.className = 'info';
-                    infoDiv.innerHTML = `
-                        <p><strong>Similarity:</strong> ${res.score.toFixed(2)}</p>
-                        <p><strong>Type:</strong> ${res.type}</p>
-                        ${res.box ? `<p><strong>Box:</strong> [${res.box.join(', ')}]</p>` : ''}
-                    `;
-                    resultDiv.appendChild(infoDiv);
-                    resultsDiv.appendChild(resultDiv);
-                });
-            } else {
-                resultsDiv.innerHTML = 'No results found.';
-            }
-        });
-    </script>
+    <script src="static/app.js"></script>
 </body>
 </html>
